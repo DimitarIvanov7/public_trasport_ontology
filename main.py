@@ -19,6 +19,7 @@ MAX_ROUTES = 250
 MAX_TRIPS = 1200
 MAX_TRANSFERS = 2000
 MAX_PATHWAYS = 500
+MAX_STOP_TIMES = 2000
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -30,6 +31,7 @@ CSV = {
     "trips": DATA_DIR / "trips.csv",
     "transfers": DATA_DIR / "transfers.csv",
     "pathways": DATA_DIR / "pathways.csv",
+    "stop_times": DATA_DIR / "stop_times.csv",
 }
 
 OUT_FILE = DATA_DIR / "transport.owl"
@@ -42,6 +44,7 @@ def main() -> None:
     trips_df = _limit(pd.read_csv(CSV["trips"]), MAX_TRIPS)
     transfers_df = _limit(pd.read_csv(CSV["transfers"]), MAX_TRANSFERS)
     pathways_df = _limit(pd.read_csv(CSV["pathways"]), MAX_PATHWAYS)
+    stop_times_df = _limit(pd.read_csv(CSV["stop_times"]), MAX_STOP_TIMES)
 
     onto = get_ontology(ONTO_IRI)
 
@@ -62,29 +65,15 @@ def main() -> None:
             pass
 
         # Subclasses
-        class MetroStop(Stop):
-            pass
-
-        class TramStop(Stop):
-            pass
-
-        class BusStop(Stop):
-            pass
-
         class BusRoute(Route):
             pass
 
         class TramRoute(Route):
             pass
 
-        class MetroRoute(Route):
+        class TrolleyRoute(Route):
             pass
 
-        class LongTrip(Trip):
-            pass
-
-        class ShortTrip(Trip):
-            pass
 
         class WheelchairFriendlyTrip(Trip):
             pass
@@ -108,29 +97,18 @@ def main() -> None:
             pass
 
         # Composite (DL) concepts
-        class ServedStop(Stop):
-            pass
-
-        class MetroOnlyStop(Stop):
-            pass
-
         class AccessibleStop(Stop):
             pass
 
-        class SurfaceStop(Stop):
-            pass
-
-        class MetroLine(Route):
-            pass
-
         # Object properties
-        class servesStop(ObjectProperty):
+        class hasStop(ObjectProperty):
+            domain = [Trip]
             range = [Stop]
 
-        class isServedBy(ObjectProperty):
+        class isStopOf(ObjectProperty):
             domain = [Stop]
-            range = [Route]
-            inverse_property = servesStop
+            range = [Trip]
+            inverse_property = hasStop
 
         class hasTrip(ObjectProperty):
             domain = [Route]
@@ -149,21 +127,6 @@ def main() -> None:
             domain = [Transfer]
             range = [Stop]
 
-        class fromRoute(ObjectProperty):
-            domain = [Transfer]
-            range = [Route]
-
-        class toRoute(ObjectProperty):
-            domain = [Transfer]
-            range = [Route]
-
-        class fromTrip(ObjectProperty):
-            domain = [Transfer]
-            range = [Trip]
-
-        class toTrip(ObjectProperty):
-            domain = [Transfer]
-            range = [Trip]
 
         # Property hierarchy (subproperty)
         class connectsTransportElement(ObjectProperty):
@@ -218,17 +181,20 @@ def main() -> None:
             range = [int]
 
         #DL (Description Logic) composite concepts
-        # SurfaceStop ≡ BusStop ⊔ TramStop
-        SurfaceStop.equivalent_to = [BusStop | TramStop]
+        # TramRoute ≡ Route ⊓ (routeType = 0)
+        TramRoute.equivalent_to = [
+            Route & routeType.value(0)
+        ]
 
-        # MetroLine ≡ Route ⊓ (routeType = 1)
-        MetroLine.equivalent_to = [Route & routeType.value(1)]
+        # TrolleyRoute ≡ Route ⊓ (routeType = 3)
+        TrolleyRoute.equivalent_to = [
+            Route & routeType.value(3)
+        ]
 
-        # ServedStop ≡ Stop ⊓ (∃ servesStop⁻.Route)
-        ServedStop.equivalent_to = [Stop & servesStop.inverse.some(Route)]
-
-        # MetroOnlyStop ≡ Stop ⊓ (∀ servesStop⁻.MetroRoute)   (ALL)
-        MetroOnlyStop.equivalent_to = [Stop & servesStop.inverse.only(MetroRoute)]
+        # BusRoute ≡ Route ⊓ (routeType = 11)
+        BusRoute.equivalent_to = [
+            Route & routeType.value(11)
+        ]
 
         # AccessibleStop ≡ Stop ⊓ (∃ connectsStop.ElevatorPathway)   (EXISTS + AND)
         AccessibleStop.equivalent_to = [Stop & connectsStop.some(ElevatorPathway)]
@@ -236,6 +202,30 @@ def main() -> None:
         # WheelchairFriendlyTrip ≡ Trip ⊓ (wheelchairAccessible = 1)
         WheelchairFriendlyTrip.equivalent_to = [Trip & wheelchairAccessible.value(1)]
 
+        # StairsPathway ≡ Pathway ⊓ (pathwayMode = 1)
+        StairsPathway.equivalent_to = [
+            Pathway & pathwayMode.value(1)
+        ]
+
+        # EscalatorPathway ≡ Pathway ⊓ (pathwayMode = 5)
+        EscalatorPathway.equivalent_to = [
+            Pathway & pathwayMode.value(5)
+        ]
+
+        # Walkway ≡ Pathway ⊓ (pathwayMode = 2)
+        Walkway.equivalent_to = [
+            Pathway & pathwayMode.value(2)
+        ]
+
+        # FastTransfer ≡ Transfer ⊓ (minTransferTime ≤ 392) (the average transfer time)
+        FastTransfer.equivalent_to = [
+            Transfer & minTransferTime.max(300)
+        ]
+
+        # SlowTransfer ≡ Transfer ⊓ (minTransferTime > 391)
+        SlowTransfer.equivalent_to = [
+            Transfer & minTransferTime.min(301)
+        ]
  
     # Create Individuals from CSV
     # Stops
@@ -297,6 +287,24 @@ def main() -> None:
         if wa is not None:
             t.wheelchairAccessible = wa
 
+    # StopTimes: connect Trips and Stops
+    stop_times_df2 = stop_times_df[
+        stop_times_df["trip_id"].astype(str).isin(trip_by_id.keys())
+        & stop_times_df["stop_id"].astype(str).isin(stop_by_id.keys())
+        ].copy()
+
+    for _, row in stop_times_df2.iterrows():
+        tid = _safe_str(row.get("trip_id"))
+        sid = _safe_str(row.get("stop_id"))
+
+        if not tid or not sid:
+            continue
+
+        trip = trip_by_id[tid]
+        stop = stop_by_id[sid]
+
+        trip.hasStop.append(stop)
+
     # Transfers
     # Create transfers only if we have both stops in our stop sample (keeps ontology consistent)
     transfers_df2 = transfers_df[
@@ -317,27 +325,6 @@ def main() -> None:
         mtt = _safe_int(row.get("min_transfer_time"))
         if mtt is not None:
             tr.minTransferTime = mtt
-
-        fr = _safe_str(row.get("from_route_id"))
-        trr = _safe_str(row.get("to_route_id"))
-        if fr and fr in route_by_id:
-            tr.fromRoute.append(route_by_id[fr])
-        if trr and trr in route_by_id:
-            tr.toRoute.append(route_by_id[trr])
-
-        ft = _safe_str(row.get("from_trip_id"))
-        tt = _safe_str(row.get("to_trip_id"))
-        if ft and ft in trip_by_id:
-            tr.fromTrip.append(trip_by_id[ft])
-        if tt and tt in trip_by_id:
-            tr.toTrip.append(trip_by_id[tt])
-
-        # For “servesStop” we can infer from transfers:
-        # if transfer references from_route_id/to_route_id, connect those routes to stops
-        if fr and fr in route_by_id:
-            route_by_id[fr].servesStop.append(stop_by_id[fs])
-        if trr and trr in route_by_id:
-            route_by_id[trr].servesStop.append(stop_by_id[ts])
 
         # Connect stops for reachability (transitive connectedTo)
         stop_by_id[fs].connectedTo.append(stop_by_id[ts])

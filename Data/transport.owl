@@ -8,15 +8,16 @@
 
 <owl:Ontology rdf:about="http://example.org/transport.owl"/>
 
-<owl:ObjectProperty rdf:about="#servesStop">
+<owl:ObjectProperty rdf:about="#hasStop">
+  <rdfs:domain rdf:resource="#Trip"/>
   <rdfs:range rdf:resource="#Stop"/>
-  <owl:inverseOf rdf:resource="#isServedBy"/>
+  <owl:inverseOf rdf:resource="#isStopOf"/>
 </owl:ObjectProperty>
 
-<owl:ObjectProperty rdf:about="#isServedBy">
+<owl:ObjectProperty rdf:about="#isStopOf">
   <rdfs:domain rdf:resource="#Stop"/>
-  <rdfs:range rdf:resource="#Route"/>
-  <owl:inverseOf rdf:resource="#servesStop"/>
+  <rdfs:range rdf:resource="#Trip"/>
+  <owl:inverseOf rdf:resource="#hasStop"/>
 </owl:ObjectProperty>
 
 <owl:ObjectProperty rdf:about="#hasTrip">
@@ -39,26 +40,6 @@
 <owl:ObjectProperty rdf:about="#toStop">
   <rdfs:domain rdf:resource="#Transfer"/>
   <rdfs:range rdf:resource="#Stop"/>
-</owl:ObjectProperty>
-
-<owl:ObjectProperty rdf:about="#fromRoute">
-  <rdfs:domain rdf:resource="#Transfer"/>
-  <rdfs:range rdf:resource="#Route"/>
-</owl:ObjectProperty>
-
-<owl:ObjectProperty rdf:about="#toRoute">
-  <rdfs:domain rdf:resource="#Transfer"/>
-  <rdfs:range rdf:resource="#Route"/>
-</owl:ObjectProperty>
-
-<owl:ObjectProperty rdf:about="#fromTrip">
-  <rdfs:domain rdf:resource="#Transfer"/>
-  <rdfs:range rdf:resource="#Trip"/>
-</owl:ObjectProperty>
-
-<owl:ObjectProperty rdf:about="#toTrip">
-  <rdfs:domain rdf:resource="#Transfer"/>
-  <rdfs:range rdf:resource="#Trip"/>
 </owl:ObjectProperty>
 
 <owl:ObjectProperty rdf:about="#connectsTransportElement"/>
@@ -149,36 +130,49 @@
   <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
 </owl:Class>
 
-<owl:Class rdf:about="#MetroStop">
-  <rdfs:subClassOf rdf:resource="#Stop"/>
-</owl:Class>
-
-<owl:Class rdf:about="#TramStop">
-  <rdfs:subClassOf rdf:resource="#Stop"/>
-</owl:Class>
-
-<owl:Class rdf:about="#BusStop">
-  <rdfs:subClassOf rdf:resource="#Stop"/>
-</owl:Class>
-
 <owl:Class rdf:about="#BusRoute">
   <rdfs:subClassOf rdf:resource="#Route"/>
+  <owl:equivalentClass>
+    <owl:Class>
+      <owl:intersectionOf rdf:parseType="Collection">
+        <rdf:Description rdf:about="#Route"/>
+        <owl:Restriction>
+          <owl:onProperty rdf:resource="#routeType"/>
+          <owl:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">11</owl:hasValue>
+        </owl:Restriction>
+      </owl:intersectionOf>
+    </owl:Class>
+  </owl:equivalentClass>
 </owl:Class>
 
 <owl:Class rdf:about="#TramRoute">
   <rdfs:subClassOf rdf:resource="#Route"/>
+  <owl:equivalentClass>
+    <owl:Class>
+      <owl:intersectionOf rdf:parseType="Collection">
+        <rdf:Description rdf:about="#Route"/>
+        <owl:Restriction>
+          <owl:onProperty rdf:resource="#routeType"/>
+          <owl:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</owl:hasValue>
+        </owl:Restriction>
+      </owl:intersectionOf>
+    </owl:Class>
+  </owl:equivalentClass>
 </owl:Class>
 
-<owl:Class rdf:about="#MetroRoute">
+<owl:Class rdf:about="#TrolleyRoute">
   <rdfs:subClassOf rdf:resource="#Route"/>
-</owl:Class>
-
-<owl:Class rdf:about="#LongTrip">
-  <rdfs:subClassOf rdf:resource="#Trip"/>
-</owl:Class>
-
-<owl:Class rdf:about="#ShortTrip">
-  <rdfs:subClassOf rdf:resource="#Trip"/>
+  <owl:equivalentClass>
+    <owl:Class>
+      <owl:intersectionOf rdf:parseType="Collection">
+        <rdf:Description rdf:about="#Route"/>
+        <owl:Restriction>
+          <owl:onProperty rdf:resource="#routeType"/>
+          <owl:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</owl:hasValue>
+        </owl:Restriction>
+      </owl:intersectionOf>
+    </owl:Class>
+  </owl:equivalentClass>
 </owl:Class>
 
 <owl:Class rdf:about="#WheelchairFriendlyTrip">
@@ -198,10 +192,32 @@
 
 <owl:Class rdf:about="#FastTransfer">
   <rdfs:subClassOf rdf:resource="#Transfer"/>
+  <owl:equivalentClass>
+    <owl:Class>
+      <owl:intersectionOf rdf:parseType="Collection">
+        <rdf:Description rdf:about="#Transfer"/>
+        <owl:Restriction>
+          <owl:onProperty rdf:resource="#minTransferTime"/>
+          <owl:maxCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">300</owl:maxCardinality>
+        </owl:Restriction>
+      </owl:intersectionOf>
+    </owl:Class>
+  </owl:equivalentClass>
 </owl:Class>
 
 <owl:Class rdf:about="#SlowTransfer">
   <rdfs:subClassOf rdf:resource="#Transfer"/>
+  <owl:equivalentClass>
+    <owl:Class>
+      <owl:intersectionOf rdf:parseType="Collection">
+        <rdf:Description rdf:about="#Transfer"/>
+        <owl:Restriction>
+          <owl:onProperty rdf:resource="#minTransferTime"/>
+          <owl:minCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">301</owl:minCardinality>
+        </owl:Restriction>
+      </owl:intersectionOf>
+    </owl:Class>
+  </owl:equivalentClass>
 </owl:Class>
 
 <owl:Class rdf:about="#ElevatorPathway">
@@ -210,40 +226,43 @@
 
 <owl:Class rdf:about="#StairsPathway">
   <rdfs:subClassOf rdf:resource="#Pathway"/>
-</owl:Class>
-
-<owl:Class rdf:about="#EscalatorPathway">
-  <rdfs:subClassOf rdf:resource="#Pathway"/>
-</owl:Class>
-
-<owl:Class rdf:about="#Walkway">
-  <rdfs:subClassOf rdf:resource="#Pathway"/>
-</owl:Class>
-
-<owl:Class rdf:about="#ServedStop">
-  <rdfs:subClassOf rdf:resource="#Stop"/>
   <owl:equivalentClass>
     <owl:Class>
       <owl:intersectionOf rdf:parseType="Collection">
-        <rdf:Description rdf:about="#Stop"/>
+        <rdf:Description rdf:about="#Pathway"/>
         <owl:Restriction>
-          <owl:onProperty rdf:resource="#isServedBy"/>
-          <owl:someValuesFrom rdf:resource="#Route"/>
+          <owl:onProperty rdf:resource="#pathwayMode"/>
+          <owl:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</owl:hasValue>
         </owl:Restriction>
       </owl:intersectionOf>
     </owl:Class>
   </owl:equivalentClass>
 </owl:Class>
 
-<owl:Class rdf:about="#MetroOnlyStop">
-  <rdfs:subClassOf rdf:resource="#Stop"/>
+<owl:Class rdf:about="#EscalatorPathway">
+  <rdfs:subClassOf rdf:resource="#Pathway"/>
   <owl:equivalentClass>
     <owl:Class>
       <owl:intersectionOf rdf:parseType="Collection">
-        <rdf:Description rdf:about="#Stop"/>
+        <rdf:Description rdf:about="#Pathway"/>
         <owl:Restriction>
-          <owl:onProperty rdf:resource="#isServedBy"/>
-          <owl:allValuesFrom rdf:resource="#MetroRoute"/>
+          <owl:onProperty rdf:resource="#pathwayMode"/>
+          <owl:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">5</owl:hasValue>
+        </owl:Restriction>
+      </owl:intersectionOf>
+    </owl:Class>
+  </owl:equivalentClass>
+</owl:Class>
+
+<owl:Class rdf:about="#Walkway">
+  <rdfs:subClassOf rdf:resource="#Pathway"/>
+  <owl:equivalentClass>
+    <owl:Class>
+      <owl:intersectionOf rdf:parseType="Collection">
+        <rdf:Description rdf:about="#Pathway"/>
+        <owl:Restriction>
+          <owl:onProperty rdf:resource="#pathwayMode"/>
+          <owl:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</owl:hasValue>
         </owl:Restriction>
       </owl:intersectionOf>
     </owl:Class>
@@ -259,33 +278,6 @@
         <owl:Restriction>
           <owl:onProperty rdf:resource="#connectsStop"/>
           <owl:someValuesFrom rdf:resource="#ElevatorPathway"/>
-        </owl:Restriction>
-      </owl:intersectionOf>
-    </owl:Class>
-  </owl:equivalentClass>
-</owl:Class>
-
-<owl:Class rdf:about="#SurfaceStop">
-  <rdfs:subClassOf rdf:resource="#Stop"/>
-  <owl:equivalentClass>
-    <owl:Class>
-      <owl:unionOf rdf:parseType="Collection">
-        <rdf:Description rdf:about="#BusStop"/>
-        <rdf:Description rdf:about="#TramStop"/>
-      </owl:unionOf>
-    </owl:Class>
-  </owl:equivalentClass>
-</owl:Class>
-
-<owl:Class rdf:about="#MetroLine">
-  <rdfs:subClassOf rdf:resource="#Route"/>
-  <owl:equivalentClass>
-    <owl:Class>
-      <owl:intersectionOf rdf:parseType="Collection">
-        <rdf:Description rdf:about="#Route"/>
-        <owl:Restriction>
-          <owl:onProperty rdf:resource="#routeType"/>
-          <owl:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</owl:hasValue>
         </owl:Restriction>
       </owl:intersectionOf>
     </owl:Class>
@@ -6340,6 +6332,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-16-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6347,6 +6340,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-22-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6354,6 +6348,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-12-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6361,6 +6356,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-3-25-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6368,6 +6365,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-6-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6375,6 +6373,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-3-11-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6382,6 +6382,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-22-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6396,6 +6397,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-14-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6403,6 +6405,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-20-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6410,6 +6413,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-4-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6424,6 +6428,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-2-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6431,6 +6436,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-4-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6445,6 +6451,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-12-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6452,6 +6459,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-18-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6473,6 +6481,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-10-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6480,6 +6489,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-2-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6487,6 +6497,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-6-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6494,6 +6505,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-12-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6501,6 +6513,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-4-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6508,6 +6521,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-18-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6515,6 +6529,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-16-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6522,6 +6537,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-8-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6529,6 +6545,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-14-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6543,6 +6560,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-24-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6550,6 +6568,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-6-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6557,6 +6576,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-10-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6564,6 +6584,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-14-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6578,6 +6599,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-18-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6592,6 +6614,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-20-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6613,6 +6636,7 @@
 <owl:NamedIndividual rdf:about="#trip_A36-A1427-2-6-24113152890">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A36"/>
+  <hasStop rdf:resource="#stop_A1649"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">СУПЕРМАРКЕТ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6620,6 +6644,7 @@
 <owl:NamedIndividual rdf:about="#trip_A36-A1427-1-20-24113152890">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A36"/>
+  <hasStop rdf:resource="#stop_A1649"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">СУПЕРМАРКЕТ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6634,6 +6659,7 @@
 <owl:NamedIndividual rdf:about="#trip_A36-A1427-1-14-24113152890">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A36"/>
+  <hasStop rdf:resource="#stop_A1649"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">СУПЕРМАРКЕТ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6641,6 +6667,7 @@
 <owl:NamedIndividual rdf:about="#trip_A36-A1427-2-20-24113152890">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A36"/>
+  <hasStop rdf:resource="#stop_A1649"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">СУПЕРМАРКЕТ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6648,6 +6675,7 @@
 <owl:NamedIndividual rdf:about="#trip_A36-A1427-2-4-24113152890">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A36"/>
+  <hasStop rdf:resource="#stop_A1649"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">СУПЕРМАРКЕТ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6655,6 +6683,7 @@
 <owl:NamedIndividual rdf:about="#trip_A36-A1427-2-24-24113152890">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A36"/>
+  <hasStop rdf:resource="#stop_A1649"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">СУПЕРМАРКЕТ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6669,6 +6698,7 @@
 <owl:NamedIndividual rdf:about="#trip_A36-A1427-2-8-24113152890">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A36"/>
+  <hasStop rdf:resource="#stop_A1649"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">СУПЕРМАРКЕТ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6683,6 +6713,7 @@
 <owl:NamedIndividual rdf:about="#trip_A36-A1427-1-18-24113152890">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A36"/>
+  <hasStop rdf:resource="#stop_A1649"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">СУПЕРМАРКЕТ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6690,6 +6721,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-1-21-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6697,6 +6730,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-3-5-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6704,6 +6739,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-2-5-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6711,6 +6748,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-2-25-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6718,6 +6757,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-3-13-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6725,6 +6766,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-1-13-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6732,6 +6775,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-2-11-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6739,6 +6784,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-2-9-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6746,6 +6793,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-2-7-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6753,6 +6802,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-3-23-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6760,6 +6811,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-3-19-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6767,6 +6820,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-1-3-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6774,6 +6829,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-1-17-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6781,6 +6838,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-1-9-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6879,6 +6938,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-8-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -6914,6 +6974,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-2-16-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7124,6 +7185,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-2-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7131,6 +7193,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-20-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7138,6 +7201,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-8-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7145,6 +7209,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-22-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7152,6 +7217,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-3-24-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7159,6 +7225,7 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1738-1-10-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1792"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛОДОХРАНИЛИЩЕ</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7166,6 +7233,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-1-11-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7173,6 +7242,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-2-21-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7180,6 +7251,8 @@
 <owl:NamedIndividual rdf:about="#trip_A103-A1737-2-19-18006829490">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A103"/>
+  <hasStop rdf:resource="#stop_A1022"/>
+  <hasStop rdf:resource="#stop_A1772"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ОБЕЛЯ-1</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7509,6 +7582,7 @@
 <owl:NamedIndividual rdf:about="#trip_A60-A191-6-8-5134671501">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A60"/>
+  <hasStop rdf:resource="#stop_A1705"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ЛЮЛИН-5</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7523,6 +7597,7 @@
 <owl:NamedIndividual rdf:about="#trip_A60-A191-6-24-5134671501">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A60"/>
+  <hasStop rdf:resource="#stop_A1705"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ЛЮЛИН-5</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7530,6 +7605,10 @@
 <owl:NamedIndividual rdf:about="#trip_A60-A3725-7-21-5134671501">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A60"/>
+  <hasStop rdf:resource="#stop_A1704"/>
+  <hasStop rdf:resource="#stop_A0328"/>
+  <hasStop rdf:resource="#stop_A2087"/>
+  <hasStop rdf:resource="#stop_A1321"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛ. СТОЧНА ГАРА</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7572,6 +7651,10 @@
 <owl:NamedIndividual rdf:about="#trip_A60-A3725-5-17-5134671501">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A60"/>
+  <hasStop rdf:resource="#stop_A1704"/>
+  <hasStop rdf:resource="#stop_A0328"/>
+  <hasStop rdf:resource="#stop_A2087"/>
+  <hasStop rdf:resource="#stop_A1321"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛ. СТОЧНА ГАРА</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7579,6 +7662,10 @@
 <owl:NamedIndividual rdf:about="#trip_A60-A3725-1-9-5134671501">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A60"/>
+  <hasStop rdf:resource="#stop_A1704"/>
+  <hasStop rdf:resource="#stop_A0328"/>
+  <hasStop rdf:resource="#stop_A2087"/>
+  <hasStop rdf:resource="#stop_A1321"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛ. СТОЧНА ГАРА</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7628,6 +7715,7 @@
 <owl:NamedIndividual rdf:about="#trip_A60-A191-7-2-5134671501">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A60"/>
+  <hasStop rdf:resource="#stop_A1705"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ж.К. ЛЮЛИН-5</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
@@ -7719,6 +7807,7 @@
 <owl:NamedIndividual rdf:about="#trip_A60-A190-5-25-5134671501">
   <rdf:type rdf:resource="#Trip"/>
   <belongsToRoute rdf:resource="#route_A60"/>
+  <hasStop rdf:resource="#stop_A1704"/>
   <tripHeadsign rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ПЛ. СТОЧНА ГАРА</tripHeadsign>
   <wheelchairAccessible rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</wheelchairAccessible>
 </owl:NamedIndividual>
