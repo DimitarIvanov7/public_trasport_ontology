@@ -1,30 +1,8 @@
-"""
-Sofia Transport Ontology builder (OWL DL + SWRL) from GTFS-like CSV files.
-
-Requirements hit:
-- 10+ concepts (classes) ✅
-- 15+ individuals ✅ (even with sampling)
-- 10+ properties ✅
-- composite concepts using EXISTS / ALL / AND / VALUE ✅
-- functional / transitive / inverse / subproperties ✅
-- SWRL rules ✅
-
-How to run:
-    pip install owlready2 pandas
-    python build_ontology.py
-
-Input CSVs expected in the same folder as this script (or change paths below):
-    stops.csv, routes.csv, trips.csv, transfers.csv, pathways.csv, levels.csv, fare_attributes.csv
-
-Output:
-    transport.owl
-"""
-
 from __future__ import annotations
-
-import math
 from pathlib import Path
 import pandas as pd
+from utils import (_safe_str, _safe_int, _limit)
+
 from owlready2 import (
     get_ontology,
     Thing,
@@ -32,20 +10,15 @@ from owlready2 import (
     ObjectProperty,
     FunctionalProperty,
     TransitiveProperty,
-    Imp,
     sync_reasoner,
 )
 
-# ----------------------------
-# Config (set to None to load ALL; careful: transfers/trips can be large)
-# ----------------------------
+# constants
 MAX_STOPS = 800
 MAX_ROUTES = 250
 MAX_TRIPS = 1200
 MAX_TRANSFERS = 2000
 MAX_PATHWAYS = 500
-MAX_LEVELS = None
-MAX_FARES = None
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -57,43 +30,10 @@ CSV = {
     "trips": DATA_DIR / "trips.csv",
     "transfers": DATA_DIR / "transfers.csv",
     "pathways": DATA_DIR / "pathways.csv",
-    "levels": DATA_DIR / "levels.csv",
-    "fares": DATA_DIR / "fare_attributes.csv",
 }
 
 OUT_FILE = DATA_DIR / "transport.owl"
 ONTO_IRI = "http://example.org/transport.owl"
-
-
-def _safe_str(x) -> str:
-    if pd.isna(x):
-        return ""
-    return str(x).strip()
-
-
-def _safe_int(x, default: int | None = None) -> int | None:
-    if pd.isna(x) or x == "":
-        return default
-    try:
-        return int(x)
-    except Exception:
-        try:
-            return int(float(x))
-        except Exception:
-            return default
-
-
-def _safe_float(x, default: float | None = None) -> float | None:
-    if pd.isna(x) or x == "":
-        return default
-    try:
-        return float(x)
-    except Exception:
-        return default
-
-
-def _limit(df: pd.DataFrame, n: int | None) -> pd.DataFrame:
-    return df if (n is None or len(df) <= n) else df.head(n)
 
 
 def main() -> None:
@@ -102,8 +42,6 @@ def main() -> None:
     trips_df = _limit(pd.read_csv(CSV["trips"]), MAX_TRIPS)
     transfers_df = _limit(pd.read_csv(CSV["transfers"]), MAX_TRANSFERS)
     pathways_df = _limit(pd.read_csv(CSV["pathways"]), MAX_PATHWAYS)
-    levels_df = _limit(pd.read_csv(CSV["levels"]), MAX_LEVELS)
-    fares_df = _limit(pd.read_csv(CSV["fares"]), MAX_FARES)
 
     onto = get_ontology(ONTO_IRI)
 
@@ -123,16 +61,7 @@ def main() -> None:
         class Pathway(Thing):
             pass
 
-        class Level(Thing):
-            pass
-
-        class Fare(Thing):
-            pass
-
-        class Agency(Thing):
-            pass
-
-        # ---------- Subclasses (classification targets) ----------
+        # Subclasses
         class MetroStop(Stop):
             pass
 
@@ -194,7 +123,7 @@ def main() -> None:
         class MetroLine(Route):
             pass
 
-        # ---------- Object properties (>=10 total with data props) ----------
+        # Object properties
         class servesStop(ObjectProperty):
             range = [Stop]
 
@@ -210,7 +139,7 @@ def main() -> None:
         class belongsToRoute(ObjectProperty):
             domain = [Trip]
             range = [Route]
-            inverse_property = hasTrip  # inverse ✅
+            inverse_property = hasTrip  # inverse
 
         class fromStop(ObjectProperty):
             domain = [Transfer]
@@ -236,24 +165,7 @@ def main() -> None:
             domain = [Transfer]
             range = [Trip]
 
-        class hasLevel(ObjectProperty):
-            domain = [Stop]
-            range = [Level]
-
-        class parentStation(ObjectProperty, FunctionalProperty):
-            domain = [Stop]
-            range = [Stop]
-
-        class providesFare(ObjectProperty):
-            domain = [Agency]
-            range = [Fare]
-
-        class providedByAgency(ObjectProperty):
-            domain = [Fare]
-            range = [Agency]
-            inverse_property = providesFare
-
-        # Property hierarchy (subproperty) ✅
+        # Property hierarchy (subproperty)
         class connectsTransportElement(ObjectProperty):
             pass
 
@@ -263,23 +175,15 @@ def main() -> None:
 
         connectsStop.is_a.append(connectsTransportElement)
 
-        # Transitive relation between stops ✅
+        # Transitive relation between stops
         class connectedTo(ObjectProperty, TransitiveProperty):
             domain = [Stop]
             range = [Stop]
 
-        # ---------- Data properties ----------
+        # Data properties
         class stopName(DataProperty, FunctionalProperty):
             domain = [Stop]
             range = [str]
-
-        class stopLat(DataProperty, FunctionalProperty):
-            domain = [Stop]
-            range = [float]
-
-        class stopLon(DataProperty, FunctionalProperty):
-            domain = [Stop]
-            range = [float]
 
         class locationType(DataProperty, FunctionalProperty):
             domain = [Stop]
@@ -313,23 +217,11 @@ def main() -> None:
             domain = [Transfer]
             range = [int]
 
-        class farePrice(DataProperty, FunctionalProperty):
-            domain = [Fare]
-            range = [float]
-
-        class paymentMethod(DataProperty, FunctionalProperty):
-            domain = [Fare]
-            range = [int]
-
-        class transferDuration(DataProperty, FunctionalProperty):
-            domain = [Fare]
-            range = [int]
-
-        # ---------- DL (Description Logic) composite concepts ----------
+        #DL (Description Logic) composite concepts
         # SurfaceStop ≡ BusStop ⊔ TramStop
         SurfaceStop.equivalent_to = [BusStop | TramStop]
 
-        # MetroLine ≡ Route ⊓ (routeType = 1)  (VALUE / hasValue)
+        # MetroLine ≡ Route ⊓ (routeType = 1)
         MetroLine.equivalent_to = [Route & routeType.value(1)]
 
         # ServedStop ≡ Stop ⊓ (∃ servesStop⁻.Route)
@@ -344,20 +236,9 @@ def main() -> None:
         # WheelchairFriendlyTrip ≡ Trip ⊓ (wheelchairAccessible = 1)
         WheelchairFriendlyTrip.equivalent_to = [Trip & wheelchairAccessible.value(1)]
 
-    # ----------------------------
+ 
     # Create Individuals from CSV
-    # ----------------------------
-
-    # --- Levels ---
-    level_by_id: dict[str, Thing] = {}
-    for _, row in levels_df.iterrows():
-        lid = _safe_str(row.get("level_id"))
-        if not lid:
-            continue
-        lv = onto.Level(f"level_{lid}")
-        level_by_id[lid] = lv
-
-    # --- Stops ---
+    # Stops
     stop_by_id: dict[str, Thing] = {}
     for _, row in stops_df.iterrows():
         sid = _safe_str(row.get("stop_id"))
@@ -371,30 +252,12 @@ def main() -> None:
         if nm:
             s.stopName = nm
 
-        lat = _safe_float(row.get("stop_lat"))
-        lon = _safe_float(row.get("stop_lon"))
-        if lat is not None and not math.isnan(lat):
-            s.stopLat = lat
-        if lon is not None and not math.isnan(lon):
-            s.stopLon = lon
-
         lt = _safe_int(row.get("location_type"))
         if lt is not None:
             s.locationType = lt
 
-        # Level link
-        lid = _safe_str(row.get("level_id"))
-        if lid and lid in level_by_id:
-            s.hasLevel.append(level_by_id[lid])
-
-        # Parent station link (if parent exists in loaded sample)
-        parent = _safe_str(row.get("parent_station"))
-        if parent and parent in stop_by_id:
-            s.parentStation = stop_by_id[parent]
-
-    # --- Routes + Agencies ---
+    # Routes
     route_by_id: dict[str, Thing] = {}
-    agency_by_id: dict[str, Thing] = {}
     for _, row in routes_df.iterrows():
         rid = _safe_str(row.get("route_id"))
         if not rid:
@@ -411,17 +274,8 @@ def main() -> None:
         if rtype is not None:
             r.routeType = rtype
 
-        # Agency
-        aid = _safe_str(row.get("agency_id"))
-        if aid:
-            ag = agency_by_id.get(aid)
-            if ag is None:
-                ag = onto.Agency(f"agency_{aid}")
-                agency_by_id[aid] = ag
-
-    # --- Trips ---
+    # Trips
     trip_by_id: dict[str, Thing] = {}
-    # quick filter: keep only trips whose route exists in our loaded routes
     trips_df2 = trips_df[trips_df["route_id"].astype(str).isin(route_by_id.keys())].copy()
     for _, row in trips_df2.iterrows():
         tid = _safe_str(row.get("trip_id"))
@@ -443,7 +297,7 @@ def main() -> None:
         if wa is not None:
             t.wheelchairAccessible = wa
 
-    # --- Transfers ---
+    # Transfers
     # Create transfers only if we have both stops in our stop sample (keeps ontology consistent)
     transfers_df2 = transfers_df[
         transfers_df["from_stop_id"].astype(str).isin(stop_by_id.keys())
@@ -478,8 +332,8 @@ def main() -> None:
         if tt and tt in trip_by_id:
             tr.toTrip.append(trip_by_id[tt])
 
-        # For “servesStop” we can infer weakly from transfers:
-        # if transfer references from_route_id/to_route_id, connect those routes to involved stops
+        # For “servesStop” we can infer from transfers:
+        # if transfer references from_route_id/to_route_id, connect those routes to stops
         if fr and fr in route_by_id:
             route_by_id[fr].servesStop.append(stop_by_id[fs])
         if trr and trr in route_by_id:
@@ -488,7 +342,7 @@ def main() -> None:
         # Connect stops for reachability (transitive connectedTo)
         stop_by_id[fs].connectedTo.append(stop_by_id[ts])
 
-    # --- Pathways ---
+    # Pathways
     # Create pathways only if both stops exist
     pathways_df2 = pathways_df[
         pathways_df["from_stop_id"].astype(str).isin(stop_by_id.keys())
@@ -520,33 +374,6 @@ def main() -> None:
         stop_by_id[fs].connectedTo.append(stop_by_id[ts])
         if bi == 1:
             stop_by_id[ts].connectedTo.append(stop_by_id[fs])
-
-    # --- Fares + link to Agency ---
-    for _, row in fares_df.iterrows():
-        fid = _safe_str(row.get("fare_id"))
-        if not fid:
-            continue
-        f = onto.Fare(f"fare_{fid}")
-
-        price = _safe_float(row.get("price"))
-        if price is not None:
-            f.farePrice = price
-
-        pm = _safe_int(row.get("payment_method"))
-        if pm is not None:
-            f.paymentMethod = pm
-
-        dur = _safe_int(row.get("transfer_duration"))
-        if dur is not None:
-            f.transferDuration = dur
-
-        aid = _safe_str(row.get("agency_id"))
-        if aid:
-            ag = agency_by_id.get(aid)
-            if ag is None:
-                ag = onto.Agency(f"agency_{aid}")
-                agency_by_id[aid] = ag
-            ag.providesFare.append(f)
 
     sync_reasoner()
 
