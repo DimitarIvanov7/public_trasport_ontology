@@ -10,7 +10,7 @@ from owlready2 import (
     ObjectProperty,
     FunctionalProperty,
     TransitiveProperty,
-    sync_reasoner,
+    sync_reasoner, ConstrainedDatatype,
 )
 
 # constants
@@ -34,7 +34,7 @@ CSV = {
     "stop_times": DATA_DIR / "stop_times.csv",
 }
 
-OUT_FILE = DATA_DIR / "transport.owl"
+OUT_FILE = "Output/transport.owl"
 ONTO_IRI = "http://example.org/transport.owl"
 
 
@@ -74,7 +74,6 @@ def main() -> None:
         class TrolleyRoute(Route):
             pass
 
-
         class WheelchairFriendlyTrip(Trip):
             pass
 
@@ -98,6 +97,9 @@ def main() -> None:
 
         # Composite (DL) concepts
         class AccessibleStop(Stop):
+            pass
+
+        class OnlyStairsAccessibleStop(Stop):
             pass
 
         # Object properties
@@ -137,6 +139,11 @@ def main() -> None:
             range = [Stop]
 
         connectsStop.is_a.append(connectsTransportElement)
+
+        class isConnectedBy(ObjectProperty):
+            domain = [Stop]
+            range = [Pathway]
+            inverse_property = connectsStop
 
         # Transitive relation between stops
         class connectedTo(ObjectProperty, TransitiveProperty):
@@ -196,8 +203,8 @@ def main() -> None:
             Route & routeType.value(11)
         ]
 
-        # AccessibleStop ≡ Stop ⊓ (∃ connectsStop.ElevatorPathway)   (EXISTS + AND)
-        AccessibleStop.equivalent_to = [Stop & connectsStop.some(ElevatorPathway)]
+        # AccessibleStop ≡ Stop ⊓ (∃ connectsStop⁻.ElevatorPathway)   (EXISTS + AND)
+        AccessibleStop.equivalent_to = [Stop & connectsStop.inverse.some(ElevatorPathway)]
 
         # WheelchairFriendlyTrip ≡ Trip ⊓ (wheelchairAccessible = 1)
         WheelchairFriendlyTrip.equivalent_to = [Trip & wheelchairAccessible.value(1)]
@@ -218,13 +225,16 @@ def main() -> None:
         ]
 
         # FastTransfer ≡ Transfer ⊓ (minTransferTime ≤ 392) (the average transfer time)
-        FastTransfer.equivalent_to = [
-            Transfer & minTransferTime.max(300)
-        ]
+        FastTransfer.equivalent_to = [Transfer & minTransferTime.some(ConstrainedDatatype(int, max_inclusive=392))]
 
-        # SlowTransfer ≡ Transfer ⊓ (minTransferTime > 391)
-        SlowTransfer.equivalent_to = [
-            Transfer & minTransferTime.min(301)
+
+        # SlowTransfer ≡ Transfer ⊓ (minTransferTime > 392)
+        SlowTransfer.equivalent_to = [Transfer & minTransferTime.some(ConstrainedDatatype(int, min_inclusive=393))]
+
+
+        # OnlyStairsAccessibleStop ≡ Stop ⊓ ∀ connectsStop⁻.StairsPathway
+        OnlyStairsAccessibleStop.equivalent_to = [
+            Stop & connectsStop.inverse.only(StairsPathway)
         ]
  
     # Create Individuals from CSV

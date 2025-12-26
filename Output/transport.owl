@@ -48,6 +48,13 @@
   <rdfs:domain rdf:resource="#Pathway"/>
   <rdfs:range rdf:resource="#Stop"/>
   <rdfs:subPropertyOf rdf:resource="#connectsTransportElement"/>
+  <owl:inverseOf rdf:resource="#isConnectedBy"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#isConnectedBy">
+  <rdfs:domain rdf:resource="#Stop"/>
+  <rdfs:range rdf:resource="#Pathway"/>
+  <owl:inverseOf rdf:resource="#connectsStop"/>
 </owl:ObjectProperty>
 
 <owl:ObjectProperty rdf:about="#connectedTo">
@@ -198,7 +205,21 @@
         <rdf:Description rdf:about="#Transfer"/>
         <owl:Restriction>
           <owl:onProperty rdf:resource="#minTransferTime"/>
-          <owl:maxCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">300</owl:maxCardinality>
+          <owl:someValuesFrom>
+            <rdfs:Datatype>
+              <owl:onDatatype rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+              <owl:withRestrictions>
+                <rdf:Description>
+                  <rdf:first>
+                    <rdf:Description>
+                      <xsd:maxInclusive rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">392</xsd:maxInclusive>
+                    </rdf:Description>
+                  </rdf:first>
+                  <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
+                </rdf:Description>
+              </owl:withRestrictions>
+            </rdfs:Datatype>
+          </owl:someValuesFrom>
         </owl:Restriction>
       </owl:intersectionOf>
     </owl:Class>
@@ -213,7 +234,21 @@
         <rdf:Description rdf:about="#Transfer"/>
         <owl:Restriction>
           <owl:onProperty rdf:resource="#minTransferTime"/>
-          <owl:minCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">301</owl:minCardinality>
+          <owl:someValuesFrom>
+            <rdfs:Datatype>
+              <owl:onDatatype rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+              <owl:withRestrictions>
+                <rdf:Description>
+                  <rdf:first>
+                    <rdf:Description>
+                      <xsd:minInclusive rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">393</xsd:minInclusive>
+                    </rdf:Description>
+                  </rdf:first>
+                  <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
+                </rdf:Description>
+              </owl:withRestrictions>
+            </rdfs:Datatype>
+          </owl:someValuesFrom>
         </owl:Restriction>
       </owl:intersectionOf>
     </owl:Class>
@@ -276,8 +311,23 @@
       <owl:intersectionOf rdf:parseType="Collection">
         <rdf:Description rdf:about="#Stop"/>
         <owl:Restriction>
-          <owl:onProperty rdf:resource="#connectsStop"/>
+          <owl:onProperty rdf:resource="#isConnectedBy"/>
           <owl:someValuesFrom rdf:resource="#ElevatorPathway"/>
+        </owl:Restriction>
+      </owl:intersectionOf>
+    </owl:Class>
+  </owl:equivalentClass>
+</owl:Class>
+
+<owl:Class rdf:about="#OnlyStairsAccessibleStop">
+  <rdfs:subClassOf rdf:resource="#Stop"/>
+  <owl:equivalentClass>
+    <owl:Class>
+      <owl:intersectionOf rdf:parseType="Collection">
+        <rdf:Description rdf:about="#Stop"/>
+        <owl:Restriction>
+          <owl:onProperty rdf:resource="#isConnectedBy"/>
+          <owl:allValuesFrom rdf:resource="#StairsPathway"/>
         </owl:Restriction>
       </owl:intersectionOf>
     </owl:Class>
